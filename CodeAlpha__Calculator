@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basic Calculator</title>
+  <style>
+    :root { --bg:#0f172a; --card:#111827; --btn:#1f2937; --btn2:#374151; --accent:#22c55e; --text:#e5e7eb; --danger:#ef4444; }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#0b1020,#0f172a);font-family:system-ui,Segoe UI,Roboto,Arial}
+    .calc{width:320px;background:rgba(17,24,39,.9);backdrop-filter:blur(10px);border-radius:24px;padding:16px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+    .screen{background:#020617;border-radius:16px;padding:12px 14px;margin-bottom:12px;color:var(--text);min-height:80px;display:flex;flex-direction:column;justify-content:center}
+    .expr{opacity:.7;font-size:14px;word-break:break-all}
+    .result{font-size:28px;font-weight:600;text-align:right;word-break:break-all}
+    .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    button{border:0;border-radius:18px;padding:14px 0;font-size:18px;color:var(--text);background:var(--btn);cursor:pointer;transition:.15s;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+    button:hover{transform:translateY(-1px);background:var(--btn2)}
+    .op{background:#1e293b}
+    .equal{background:var(--accent);color:#022c22;font-weight:700}
+    .wide{grid-column:span 2}
+    .danger{background:#3f1d1d;color:#fecaca}
+    .hint{margin-top:10px;font-size:12px;color:#94a3b8;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="calc" aria-label="Calculator">
+    <div class="screen">
+      <div id="expr" class="expr"></div>
+      <div id="result" class="result">0</div>
+    </div>
+    <div class="keys">
+      <button class="danger" data-action="clearAll">AC</button>
+      <button data-action="back">⌫</button>
+      <button class="op" data-val="/">÷</button>
+      <button class="op" data-val="*">×</button>
+
+      <button data-val="7">7</button>
+      <button data-val="8">8</button>
+      <button data-val="9">9</button>
+      <button class="op" data-val="-">−</button>
+
+      <button data-val="4">4</button>
+      <button data-val="5">5</button>
+      <button data-val="6">6</button>
+      <button class="op" data-val="+">+</button>
+
+      <button data-val="1">1</button>
+      <button data-val="2">2</button>
+      <button data-val="3">3</button>
+      <button class="equal" data-action="equals">=</button>
+
+      <button class="wide" data-val="0">0</button>
+      <button data-val=".">.</button>
+    </div>
+    <div class="hint">Keyboard: 0-9 . + - * / Enter Backspace Esc</div>
+  </div>
+
+  <script>
+    const exprEl = document.getElementById('expr');
+    const resEl = document.getElementById('result');
+    let expr = '';
+
+    const isOp = c => ['+','-','*','/'].includes(c);
+
+    function update(){
+      exprEl.textContent = expr || '';
+      try{
+        if(!expr) { resEl.textContent = '0'; return; }
+        const safe = expr.replace(/÷/g,'/').replace(/×/g,'*');
+        const val = Function('return '+safe)();
+        if(val === Infinity || Number.isNaN(val)) throw Error('bad');
+        resEl.textContent = (+val.toFixed(10)).toString();
+      }catch{ resEl.textContent = '…'; }
+    }
+
+    function add(v){
+      if(v === '.'){
+        const last = expr.split(/[-+*/]/).pop();
+        if(last.includes('.')) return;
+      }
+      if(isOp(v)){
+        if(!expr) return;
+        if(isOp(expr.slice(-1))) expr = expr.slice(0,-1);
+      }
+      expr += v; update();
+    }
+
+    function clearAll(){ expr=''; update(); }
+    function back(){ expr = expr.slice(0,-1); update(); }
+    function equals(){ try{ const r = resEl.textContent; if(r!=='…'){ expr = r; update(); } }catch{} }
+
+    document.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click',()=>{
+        const v=b.dataset.val; const a=b.dataset.action;
+        if(v) add(v);
+        if(a==='clearAll') clearAll();
+        if(a==='back') back();
+        if(a==='equals') equals();
+      });
+    });
+
+    window.addEventListener('keydown',e=>{
+      if((e.key>='0'&&e.key<='9')||['+','-','*','/','.'].includes(e.key)) add(e.key);
+      else if(e.key==='Enter') equals();
+      else if(e.key==='Backspace') back();
+      else if(e.key==='Escape') clearAll();
+    });
+
+    update();
+  </script>
+</body>
+</html>
