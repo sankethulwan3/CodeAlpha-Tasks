@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JS Music Player</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;display:grid;place-items:center;background:#0f172a;font-family:system-ui,Segoe UI,Arial;color:#e5e7eb}
+    .player{width:360px;background:#111827;border-radius:24px;padding:16px;box-shadow:0 20px 40px rgba(0,0,0,.4)}
+    .title{font-weight:700;font-size:18px}
+    .artist{opacity:.7;margin-bottom:10px}
+    .controls{display:flex;gap:10px;justify-content:center;margin:10px 0}
+    button{border:0;border-radius:14px;padding:10px 14px;background:#1f2937;color:#e5e7eb;cursor:pointer}
+    button:hover{background:#374151}
+    .progress{width:100%}
+    .time{display:flex;justify-content:space-between;font-size:12px;opacity:.7}
+    .volume{width:100%;margin-top:8px}
+    .playlist{margin-top:12px;max-height:160px;overflow:auto;border-top:1px solid #1f2937;padding-top:8px}
+    .song{padding:8px;border-radius:10px;cursor:pointer}
+    .song.active,.song:hover{background:#1f2937}
+    .row{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+    .auto{display:flex;align-items:center;gap:6px;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="player">
+    <div class="title" id="title">-</div>
+    <div class="artist" id="artist">-</div>
+
+    <div class="controls">
+      <button id="prev">⏮</button>
+      <button id="play">▶</button>
+      <button id="next">⏭</button>
+    </div>
+
+    <input type="range" id="progress" class="progress" value="0" min="0" step="1">
+    <div class="time"><span id="current">0:00</span><span id="duration">0:00</span></div>
+
+    <div class="row">
+      <input type="range" id="volume" class="volume" min="0" max="1" step="0.01" value="0.7">
+      <label class="auto"><input type="checkbox" id="autoplay" checked>Autoplay</label>
+    </div>
+
+    <div class="playlist" id="playlist"></div>
+  </div>
+
+  <audio id="audio"></audio>
+
+  <script>
+    const songs=[
+      {title:'Tum Hi Ho',artist:'Arijit Singh',src:'songs/01_tum_hi_ho.mp3'},
+      {title:'Kesariya',artist:'Arijit Singh',src:'songs/02_kesariya.mp3'},
+      {title:'Raataan Lambiyan',artist:'Jubin Nautiyal',src:'songs/03_raataan_lambiyan.mp3'},
+      {title:'Tera Ban Jaunga',artist:'Akhil Sachdeva',src:'songs/05_tera_ban_jaunga.mp3'},
+      {title:'Kaise Hua',artist:'Vishal Mishra',src:'songs/06_kaise_hua.mp3'}
+    ];
+
+    const audio=document.getElementById('audio');
+    const playBtn=document.getElementById('play');
+    const prevBtn=document.getElementById('prev');
+    const nextBtn=document.getElementById('next');
+    const title=document.getElementById('title');
+    const artist=document.getElementById('artist');
+    const progress=document.getElementById('progress');
+    const current=document.getElementById('current');
+    const duration=document.getElementById('duration');
+    const volume=document.getElementById('volume');
+    const autoplay=document.getElementById('autoplay');
+    const list=document.getElementById('playlist');
+
+    let i=0,playing=false;
+
+    function fmt(t){const m=Math.floor(t/60)||0,s=Math.floor(t%60)||0;return m+':'+String(s).padStart(2,'0')}
+
+    function load(idx){i=idx;audio.src=songs[i].src;title.textContent=songs[i].title;artist.textContent=songs[i].artist;setActive()}
+    function setActive(){[...list.children].forEach((e,idx)=>e.classList.toggle('active',idx===i))}
+
+    function play(){audio.play();playing=true;playBtn.textContent='⏸'}
+    function pause(){audio.pause();playing=false;playBtn.textContent='▶'}
+
+    playBtn.onclick=()=>playing?pause():play();
+    prevBtn.onclick=()=>{load((i-1+songs.length)%songs.length);play()};
+    nextBtn.onclick=()=>{load((i+1)%songs.length);play()};
+
+    audio.onloadedmetadata=()=>{progress.max=Math.floor(audio.duration);duration.textContent=fmt(audio.duration)}
+    audio.ontimeupdate=()=>{progress.value=Math.floor(audio.currentTime);current.textContent=fmt(audio.currentTime)}
+
+    progress.oninput=()=>audio.currentTime=progress.value;
+    volume.oninput=()=>audio.volume=volume.value;
+
+    audio.onended=()=>{ if(autoplay.checked){ nextBtn.click(); } else { pause(); } };
+
+    songs.forEach((s,idx)=>{
+      const d=document.createElement('div');d.className='song';d.textContent=s.title+' - '+s.artist;d.onclick=()=>{load(idx);play()};list.appendChild(d);
+    });
+
+    load(0);audio.volume=volume.value;
+  </script>
+</body>
+</html>
